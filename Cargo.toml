@@ -1,8 +1,8 @@
 [package]
 name = "endio"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["lcdr"]
-edition = "2018"
+edition = "2024"
 description = "Simple reading & writing of binary data, extensible and ergonomic."
 keywords = ["binary", "byte", "serialization", "deserialization", "endian"]
 categories = ["encoding", "parsing"]
@@ -15,5 +15,7 @@ endio_derive = { path = "endio_derive", optional = true }
 
 [features]
 default = ["derive"]
-
 derive = ["endio_derive"]
+
+[lints.clippy]
+pedantic = "warn"
