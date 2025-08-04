@@ -42,7 +42,7 @@
 
     ### Simple migration
 
-    If you were using raw `std::io::{Read, Write}` with manual (de-)serialization code before, or a crate providing abstractions on top of `{Read, Write}`, the migration towards using this crate is extremely straightforward. Simply swap out the std::io traits with the endian-specific traits from this crate, and you'll have access to the direct read/write methods. You don't need to write any extra code, everything that implements `std::io::Read` or `std::io::Write` will automatically implement the endian-specific traits.
+    If you were using raw `std::io::{Read, Write}` with manual (de-)serialization code before, or a crate providing abstractions on top of `{Read, Write}`, the migration towards using this crate is extremely straightforward. Simply swap out the `std::io` traits with the endian-specific traits from this crate, and you'll have access to the direct read/write methods. You don't need to write any extra code, everything that implements `std::io::Read` or `std::io::Write` will automatically implement the endian-specific traits.
 
     (De-)serializations for Rust's primitive types are already implemented, if it makes sense to implement them. For example, `isize` and `usize` aren't implemented, since they are inherently variable-sized and therefore can't have a portable byte representation. However, the other integral and floating point types are implemented, and if you just want to read/write some simple primitive types, using the `read`/`write` methods will Just Work™.
 
@@ -122,18 +122,17 @@
     You can read and write your own types by implementing `Serialize`/`Deserialize`. See their documentation for details.
 */
 
+mod deserialize;
 mod endian;
 mod read;
-mod write;
-mod deserialize;
 mod serialize;
+mod write;
 
+pub use self::deserialize::*;
 pub use self::endian::*;
 pub use self::read::*;
-pub use self::write::*;
-pub use self::deserialize::*;
 pub use self::serialize::*;
+pub use self::write::*;
 
-#[cfg(feature="derive")]
+#[cfg(feature = "derive")]
 pub use endio_derive::*;
-

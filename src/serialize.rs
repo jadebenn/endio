@@ -2,7 +2,7 @@ use std::io::Result as Res;
 use std::io::Write;
 use std::net::Ipv4Addr;
 
-use crate::{BEWrite, BigEndian, Endianness, EWrite, LEWrite, LittleEndian};
+use crate::{BEWrite, BigEndian, EWrite, Endianness, LEWrite, LittleEndian};
 
 /**
     Implement this for your types to be able to `write` them.
@@ -293,17 +293,17 @@ pub trait Serialize<E: Endianness, W> {
 
 macro_rules! impl_ref {
     ($t:ident) => {
-        impl<W: Write+BEWrite> Serialize<BigEndian, W> for &$t {
+        impl<W: Write + BEWrite> Serialize<BigEndian, W> for &$t {
             fn serialize(self, writer: &mut W) -> Res<()> {
                 BEWrite::write(writer, *self)
             }
         }
-        impl<W: Write+LEWrite> Serialize<LittleEndian, W> for &$t {
+        impl<W: Write + LEWrite> Serialize<LittleEndian, W> for &$t {
             fn serialize(self, writer: &mut W) -> Res<()> {
                 LEWrite::write(writer, *self)
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_int {
@@ -345,7 +345,7 @@ macro_rules! impl_int {
                 }
             }
         }
-    }
+    };
 }
 
 impl_int!(u8);
@@ -359,14 +359,20 @@ impl_int!(i32);
 impl_int!(i64);
 impl_int!(i128);
 
-impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f32 where u32: Serialize<E, W> {
+impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f32
+where
+    u32: Serialize<E, W>,
+{
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.to_bits())
     }
 }
 impl_ref!(f32);
 
-impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f64 where u64: Serialize<E, W> {
+impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f64
+where
+    u64: Serialize<E, W>,
+{
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.to_bits())
     }
@@ -376,13 +382,13 @@ impl_ref!(f64);
 /// Writes a bool by writing a byte.
 impl<E: Endianness, W: Write> Serialize<E, W> for bool {
     fn serialize(self, writer: &mut W) -> Res<()> {
-        writer.write_all(&(self as u8).to_ne_bytes())
+        writer.write_all(&u8::from(self).to_ne_bytes())
     }
 }
 impl_ref!(bool);
 
 impl<E: Endianness, W: Write> Serialize<E, W> for Ipv4Addr {
-    fn serialize(self, writer: &mut W) -> Res<()>    {
+    fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write_all(&self.octets()[..])
     }
 }
@@ -390,7 +396,10 @@ impl_ref!(Ipv4Addr);
 
 // todo[specialization]: specialize for &[u8] (std::io::Write::write_all)
 /// Writes the entire contents of the byte slice.
-impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &[S] where for<'a> &'a S: Serialize<E, W> {
+impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &[S]
+where
+    for<'a> &'a S: Serialize<E, W>,
+{
     fn serialize(self, writer: &mut W) -> Res<()> {
         for elem in self {
             writer.write(elem)?;
@@ -400,16 +409,21 @@ impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &[S] where for<'a> &'a 
 }
 
 /// Writes the entire contents of the Vec.
-impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &Vec<S> where for<'a> &'a S: Serialize<E, W> {
+impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &Vec<S>
+where
+    for<'a> &'a S: Serialize<E, W>,
+{
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.as_slice())
     }
 }
 
 /// Writes an `Option<T>` by writing a bool whether the `Option` is `Some`, and if yes, writes `T`.
-impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for & Option<S>
-    where bool: Serialize<E, W>,
-        for<'a> &'a S: Serialize<E, W> {
+impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &Option<S>
+where
+    bool: Serialize<E, W>,
+    for<'a> &'a S: Serialize<E, W>,
+{
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.is_some())?;
         if let Some(x) = self {
@@ -462,7 +476,7 @@ mod tests {
     #[test]
     fn write_i8() {
         let data = b"\x80";
-        let val = i8::min_value();
+        let val = i8::MIN;
         {
             use crate::BEWrite;
             let mut writer = vec![];
@@ -480,7 +494,7 @@ mod tests {
     #[test]
     fn write_u8() {
         let data = b"\xff";
-        let val = u8::max_value();
+        let val = u8::MAX;
         {
             use crate::BEWrite;
             let mut writer = vec![];
@@ -501,13 +515,13 @@ mod tests {
         {
             use crate::BEWrite;
             let mut writer = vec![];
-            writer.write(642.613525390625f32).unwrap();
+            writer.write(642.613_525_390_625_f32).unwrap();
             assert_eq!(writer, data);
         }
         {
             use crate::LEWrite;
             let mut writer = vec![];
-            writer.write(1337.0083007812f32).unwrap();
+            writer.write(1_337.008_300_781_2_f32).unwrap();
             assert_eq!(writer, data);
         }
     }
@@ -518,13 +532,13 @@ mod tests {
         {
             use crate::BEWrite;
             let mut writer = vec![];
-            writer.write(1310.5201984283194f64).unwrap();
+            writer.write(1_310.520_198_428_319_4_f64).unwrap();
             assert_eq!(writer, data);
         }
         {
             use crate::LEWrite;
             let mut writer = vec![];
-            writer.write(1337.4199999955163f64).unwrap();
+            writer.write(1_337.419_999_995_516_3_f64).unwrap();
             assert_eq!(writer, data);
         }
     }
@@ -550,8 +564,9 @@ mod tests {
 
     #[test]
     fn write_slice() {
-        let data = b"\xba\xad\xba\xad";
         use crate::LEWrite;
+
+        let data = b"\xba\xad\xba\xad";
         let mut writer = vec![];
         writer.write(&[0xadbau16, 0xadbau16][..]).unwrap();
         assert_eq!(writer, data);
@@ -559,8 +574,9 @@ mod tests {
 
     #[test]
     fn write_vec() {
-        let data = b"\xba\xad\xba\xad";
         use crate::LEWrite;
+
+        let data = b"\xba\xad\xba\xad";
         let mut writer = vec![];
         writer.write(&vec![0xadbau16, 0xadbau16]).unwrap();
         assert_eq!(writer, data);
@@ -568,8 +584,9 @@ mod tests {
 
     #[test]
     fn write_option_none() {
-        let data = b"\x00";
         use crate::LEWrite;
+
+        let data = b"\x00";
         let mut writer = vec![];
         let val: Option<u16> = None;
         writer.write(&val).unwrap();
@@ -578,8 +595,9 @@ mod tests {
 
     #[test]
     fn write_option_some() {
-        let data = b"\x01\x42\x00";
         use crate::LEWrite;
+
+        let data = b"\x01\x42\x00";
         let mut writer = vec![];
         writer.write(&Some(0x0042u16)).unwrap();
         assert_eq!(writer, data);
@@ -587,13 +605,18 @@ mod tests {
 
     #[test]
     fn write_struct_forced() {
+        use crate::LEWrite;
+
         struct Test {
             a: u16,
         }
         {
-            use crate::{Endianness, EWrite, Serialize};
+            use crate::{EWrite, Endianness, Serialize};
 
-            impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for Test where u16: Serialize<E, W> {
+            impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for Test
+            where
+                u16: Serialize<E, W>,
+            {
                 fn serialize(self, writer: &mut W) -> Res<()> {
                     writer.write(self.a)?;
                     Ok(())
@@ -601,7 +624,6 @@ mod tests {
             }
         }
 
-        use crate::LEWrite;
         let data = b"\xba\xad";
         let mut writer = vec![];
         writer.write_be(Test { a: 0xbaad }).unwrap();

@@ -8,7 +8,7 @@ keywords = ["binary", "byte", "serialization", "deserialization", "endian"]
 categories = ["encoding", "parsing"]
 readme = "README.md"
 license = "AGPL-3.0-or-later"
-repository = "https://github.com/lcdr/endio/"
+repository = "https://github.com/jadebenn/endio/"
 
 [dependencies]
 endio_derive = { path = "endio_derive", optional = true }

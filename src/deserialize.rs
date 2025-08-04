@@ -305,7 +305,10 @@ impl<E: Endianness, R: Read> Deserialize<E, R> for bool {
         match buf[0] {
             0 => Ok(false),
             1 => Ok(true),
-            _ => Err(io::Error::new(io::ErrorKind::InvalidData, "bool had value other than 0 or 1")),
+            _ => Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "bool had value other than 0 or 1",
+            )),
         }
     }
 }
@@ -365,7 +368,7 @@ macro_rules! impl_int {
                 }
             }
         }
-    }
+    };
 }
 
 impl_int!(u16);
@@ -377,14 +380,20 @@ impl_int!(i32);
 impl_int!(i64);
 impl_int!(i128);
 
-impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f32 where u32: Deserialize<E, R> {
+impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f32
+where
+    u32: Deserialize<E, R>,
+{
     fn deserialize(reader: &mut R) -> Res<Self> {
         let ival: u32 = reader.read()?;
         Ok(Self::from_bits(ival))
     }
 }
 
-impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f64 where u64: Deserialize<E, R> {
+impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f64
+where
+    u64: Deserialize<E, R>,
+{
     fn deserialize(reader: &mut R) -> Res<Self> {
         let ival: u64 = reader.read()?;
         Ok(Self::from_bits(ival))
@@ -400,14 +409,13 @@ impl<E: Endianness, R: Read> Deserialize<E, R> for Ipv4Addr {
 }
 
 /// Reads an `Option<T>` by reading a bool, and if it is `true`, reads `T`.
-impl<E: Endianness, R: ERead<E>, T: Deserialize<E, R>> Deserialize<E, R> for Option<T> where bool: Deserialize<E, R> {
+impl<E: Endianness, R: ERead<E>, T: Deserialize<E, R>> Deserialize<E, R> for Option<T>
+where
+    bool: Deserialize<E, R>,
+{
     fn deserialize(reader: &mut R) -> Res<Self> {
         let is_some: bool = reader.read()?;
-        Ok(if is_some {
-            Some(reader.read()?)
-        } else {
-            None
-        })
+        Ok(if is_some { Some(reader.read()?) } else { None })
     }
 }
 
@@ -424,13 +432,13 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, false);
+            assert!(!val);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, false);
+            assert!(!val);
         }
     }
 
@@ -442,13 +450,13 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, true);
+            assert!(val);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, true);
+            assert!(val);
         }
     }
 
@@ -478,13 +486,13 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, i8::min_value());
+            assert_eq!(val, i8::MIN);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, i8::min_value());
+            assert_eq!(val, i8::MIN);
         }
     }
 
@@ -496,17 +504,18 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, u8::max_value());
+            assert_eq!(val, u8::MAX);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, u8::max_value());
+            assert_eq!(val, u8::MAX);
         }
     }
 
     #[test]
+    #[allow(clippy::float_cmp, reason = "Direct float comparison for test data")]
     fn read_f32() {
         let data = b"\x44\x20\xa7\x44";
         let mut val: f32;
@@ -514,17 +523,18 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, 642.613525390625);
+            assert_eq!(val, 642.613_525_390_625);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, 1337.0083007812);
+            assert_eq!(val, 1_337.008_300_781_2);
         }
     }
 
     #[test]
+    #[allow(clippy::float_cmp, reason = "Direct float comparison for test data")]
     fn read_f64() {
         let data = b"\x40\x94\x7a\x14\xae\xe5\x94\x40";
         let mut val: f64;
@@ -532,13 +542,13 @@ mod tests {
             use crate::BERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, 1310.5201984283194);
+            assert_eq!(val, 1_310.520_198_428_319_4);
         }
         {
             use crate::LERead;
             let mut reader = &data[..];
             val = reader.read().unwrap();
-            assert_eq!(val, 1337.4199999955163);
+            assert_eq!(val, 1_337.419_999_995_516_3);
         }
     }
 
@@ -564,33 +574,38 @@ mod tests {
 
     #[test]
     fn read_option_none() {
-        let data = b"\x00";
-        let val: Option<u16>;
         use crate::LERead;
+
+        let data = b"\x00";
         let mut reader = &data[..];
-        val = reader.read().unwrap();
+        let val: Option<u16> = reader.read().unwrap();
         assert_eq!(val, None);
     }
 
     #[test]
     fn read_option_some() {
-        let data = b"\x01\x2a\x00";
-        let val: Option<u16>;
         use crate::LERead;
+
+        let data = b"\x01\x2a\x00";
         let mut reader = &data[..];
-        val = reader.read().unwrap();
+        let val: Option<u16> = reader.read().unwrap();
         assert_eq!(val, Some(0x002a));
     }
 
     #[test]
     fn read_struct_forced() {
+        use crate::LERead;
+
         struct Test {
             a: u16,
         }
         {
-            use crate::{Deserialize, Endianness, ERead};
+            use crate::{Deserialize, ERead, Endianness};
 
-            impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for Test where u16: Deserialize<E, R> {
+            impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for Test
+            where
+                u16: Deserialize<E, R>,
+            {
                 fn deserialize(reader: &mut R) -> Res<Self> {
                     let a = reader.read()?;
                     Ok(Test { a })
@@ -598,7 +613,6 @@ mod tests {
             }
         }
 
-        use crate::LERead;
         let data = b"\xba\xad";
         let mut reader = &data[..];
         let val: Test = reader.read_be().unwrap();
