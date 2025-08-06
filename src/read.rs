@@ -27,14 +27,17 @@ pub trait ERead<E: Endianness>: Sized {
     /// Reads a `Deserialize` from the reader, in the reader's endianness.
     ///
     /// What's actually read is up to the implementation of the `Deserialize`.
+    #[inline]
     fn read<D: Deserialize<E, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
     /// Reads in forced big endian.
+    #[inline]
     fn read_be<D: Deserialize<BigEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
     /// Reads in forced little endian.
+    #[inline]
     fn read_le<D: Deserialize<LittleEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
@@ -47,12 +50,15 @@ pub trait ERead<E: Endianness>: Sized {
 ///
 /// This exists solely to make `use` notation work. See `ERead` for documentation.
 pub trait BERead: Sized {
+    #[inline]
     fn read<D: Deserialize<BigEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
+    #[inline]
     fn read_be<D: Deserialize<BigEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
+    #[inline]
     fn read_le<D: Deserialize<LittleEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
@@ -64,12 +70,15 @@ pub trait BERead: Sized {
 ///
 /// This exists solely to make `use` notation work. See `ERead` for documentation.
 pub trait LERead: Sized {
+    #[inline]
     fn read<D: Deserialize<LittleEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
+    #[inline]
     fn read_be<D: Deserialize<BigEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
+    #[inline]
     fn read_le<D: Deserialize<LittleEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }

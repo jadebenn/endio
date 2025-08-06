@@ -297,6 +297,7 @@ pub trait Deserialize<E: Endianness, R>: Sized {
 
 /// Reads a bool by reading a byte, returning false for 0, true for 1, and an `InvalidData` error for any other value.
 impl<E: Endianness, R: Read> Deserialize<E, R> for bool {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let mut buf = [0; size_of::<Self>()];
         reader.read_exact(&mut buf)?;
@@ -312,6 +313,7 @@ impl<E: Endianness, R: Read> Deserialize<E, R> for bool {
 }
 
 impl<E: Endianness, R: Read> Deserialize<E, R> for i8 {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let mut buf = [0; size_of::<Self>()];
         reader.read_exact(&mut buf)?;
@@ -320,6 +322,7 @@ impl<E: Endianness, R: Read> Deserialize<E, R> for i8 {
 }
 
 impl<E: Endianness, R: Read> Deserialize<E, R> for u8 {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let mut buf = [0; size_of::<Self>()];
         reader.read_exact(&mut buf)?;
@@ -330,6 +333,7 @@ impl<E: Endianness, R: Read> Deserialize<E, R> for u8 {
 macro_rules! impl_int {
     ($t:ident) => {
         impl<R: Read> Deserialize<BigEndian, R> for $t {
+            #[inline]
             fn deserialize(reader: &mut R) -> Res<Self> {
                 let mut buf = [0; size_of::<Self>()];
                 reader.read_exact(&mut buf)?;
@@ -338,6 +342,7 @@ macro_rules! impl_int {
         }
 
         impl<R: Read> Deserialize<LittleEndian, R> for $t {
+            #[inline]
             fn deserialize(reader: &mut R) -> Res<Self> {
                 let mut buf = [0; size_of::<Self>()];
                 reader.read_exact(&mut buf)?;
@@ -382,6 +387,7 @@ impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f32
 where
     u32: Deserialize<E, R>,
 {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let ival: u32 = reader.read()?;
         Ok(Self::from_bits(ival))
@@ -392,6 +398,7 @@ impl<E: Endianness, R: ERead<E>> Deserialize<E, R> for f64
 where
     u64: Deserialize<E, R>,
 {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let ival: u64 = reader.read()?;
         Ok(Self::from_bits(ival))
@@ -399,6 +406,7 @@ where
 }
 
 impl<E: Endianness, R: Read> Deserialize<E, R> for Ipv4Addr {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let mut buf = [0; 4];
         reader.read_exact(&mut buf)?;
@@ -411,6 +419,7 @@ impl<E: Endianness, R: ERead<E>, T: Deserialize<E, R>> Deserialize<E, R> for Opt
 where
     bool: Deserialize<E, R>,
 {
+    #[inline]
     fn deserialize(reader: &mut R) -> Res<Self> {
         let is_some: bool = reader.read()?;
         Ok(if is_some { Some(reader.read()?) } else { None })
