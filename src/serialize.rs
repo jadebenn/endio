@@ -292,11 +292,13 @@ pub trait Serialize<E: Endianness, W> {
 macro_rules! impl_ref {
     ($t:ident) => {
         impl<W: Write + BEWrite> Serialize<BigEndian, W> for &$t {
+            #[inline]
             fn serialize(self, writer: &mut W) -> Res<()> {
                 BEWrite::write(writer, *self)
             }
         }
         impl<W: Write + LEWrite> Serialize<LittleEndian, W> for &$t {
+            #[inline]
             fn serialize(self, writer: &mut W) -> Res<()> {
                 LEWrite::write(writer, *self)
             }
@@ -307,12 +309,14 @@ macro_rules! impl_ref {
 macro_rules! impl_int {
     ($t:ident) => {
         impl<W: Write> Serialize<BigEndian, W> for $t {
+            #[inline]
             fn serialize(self, writer: &mut W) -> Res<()> {
                 writer.write_all(&self.to_be_bytes())
             }
         }
 
         impl<W: Write> Serialize<LittleEndian, W> for $t {
+            #[inline]
             fn serialize(self, writer: &mut W) -> Res<()> {
                 writer.write_all(&self.to_le_bytes())
             }
@@ -361,6 +365,7 @@ impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f32
 where
     u32: Serialize<E, W>,
 {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.to_bits())
     }
@@ -371,6 +376,7 @@ impl<E: Endianness, W: EWrite<E>> Serialize<E, W> for f64
 where
     u64: Serialize<E, W>,
 {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.to_bits())
     }
@@ -379,6 +385,7 @@ impl_ref!(f64);
 
 /// Writes a bool by writing a byte.
 impl<E: Endianness, W: Write> Serialize<E, W> for bool {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write_all(&u8::from(self).to_ne_bytes())
     }
@@ -386,6 +393,7 @@ impl<E: Endianness, W: Write> Serialize<E, W> for bool {
 impl_ref!(bool);
 
 impl<E: Endianness, W: Write> Serialize<E, W> for Ipv4Addr {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write_all(&self.octets()[..])
     }
@@ -398,6 +406,7 @@ impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &[S]
 where
     for<'a> &'a S: Serialize<E, W>,
 {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         for elem in self {
             writer.write(elem)?;
@@ -411,6 +420,7 @@ impl<E: Endianness, W: EWrite<E>, S> Serialize<E, W> for &Vec<S>
 where
     for<'a> &'a S: Serialize<E, W>,
 {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.as_slice())
     }
@@ -422,6 +432,7 @@ where
     bool: Serialize<E, W>,
     for<'a> &'a S: Serialize<E, W>,
 {
+    #[inline]
     fn serialize(self, writer: &mut W) -> Res<()> {
         writer.write(self.is_some())?;
         if let Some(x) = self {
