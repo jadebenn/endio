@@ -1,23 +1,18 @@
-/**
-    Only necessary for custom (de-)serializations.
-
-    You can use this as a blanket impl trait bound to write code that is not endian-specific.
-
-    You can't implement this trait, it only exists as a trait bound.
-*/
+/// Only necessary for custom (de-)serializations.
+///
+/// You can use this as a blanket impl trait bound to write code that is not endian-specific.
+///
+/// You can't implement this trait, it only exists as a trait bound.
 pub trait Endianness: private::Sealed {}
 
-/**
-    Only necessary for custom (de-)serializations.
-
-    You can use this as a type parameter in your implementation to write code specific to big endian.
-*/
+/// Only necessary for custom (de-)serializations.
+///
+/// You can use this as a type parameter in your implementation to write code specific to big endian.
 pub struct BigEndian;
-/**
-    Only necessary for custom (de-)serializations.
 
-    You can use this as a type parameter in your implementation to write code specific to little endian.
-*/
+/// Only necessary for custom (de-)serializations.
+///
+/// You can use this as a type parameter in your implementation to write code specific to little endian.
 pub struct LittleEndian;
 
 impl Endianness for BigEndian {}

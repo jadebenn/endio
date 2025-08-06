@@ -3,34 +3,30 @@ use std::io::Result as Res;
 
 use crate::{BigEndian, Deserialize, Endianness, LittleEndian};
 
-/**
-    Only necessary for custom (de-)serializations.
-
-    Interface for reading data with a specified endianness. Use this interface to make deserializations automatically switch endianness without having to write the same code twice.
-
-    In theory this would be the only read trait and BE-/LERead would be aliases to the BE/LE type parameter variants, but trait aliases aren't stable yet.
-
-    ## Examples
-
-    ```
-    use endio::LERead;
-
-    let mut reader = &b"\x2a\x01\xcf\xfe\xf3\x2c"[..];
-    let a: u8 = reader.read().unwrap();
-    let b: bool = reader.read().unwrap();
-    let c: u32 = reader.read().unwrap();
-    assert_eq!(a, 42);
-    assert_eq!(b, true);
-    assert_eq!(c, 754187983);
-    ```
-*/
+/// Only necessary for custom (de-)serializations.
+///
+/// Interface for reading data with a specified endianness. Use this interface to make deserializations automatically switch endianness without having to write the same code twice.
+///
+/// In theory this would be the only read trait and BE-/LERead would be aliases to the BE/LE type parameter variants, but trait aliases aren't stable yet.
+///
+/// ## Examples
+///
+/// ```
+/// use endio::LERead;
+///
+/// let mut reader = &b"\x2a\x01\xcf\xfe\xf3\x2c"[..];
+/// let a: u8 = reader.read().unwrap();
+/// let b: bool = reader.read().unwrap();
+/// let c: u32 = reader.read().unwrap();
+/// assert_eq!(a, 42);
+/// assert_eq!(b, true);
+/// assert_eq!(c, 754187983);
+/// ```
 pub trait ERead<E: Endianness>: Sized {
     // todo[supertrait item shadowing]: make Read a supertrait of this
-    /**
-        Reads a `Deserialize` from the reader, in the reader's endianness.
-
-        What's actually read is up to the implementation of the `Deserialize`.
-    */
+    /// Reads a `Deserialize` from the reader, in the reader's endianness.
+    ///
+    /// What's actually read is up to the implementation of the `Deserialize`.
     fn read<D: Deserialize<E, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
     }
@@ -45,14 +41,11 @@ pub trait ERead<E: Endianness>: Sized {
 }
 
 // todo[trait aliases]: make these aliases of ERead
-
-/**
-    Use this to `read` in **big** endian.
-
-    Wrapper for `ERead<BigEndian>`.
-
-    This exists solely to make `use` notation work. See `ERead` for documentation.
-*/
+/// Use this to `read` in **big** endian.
+///
+/// Wrapper for `ERead<BigEndian>`.
+///
+/// This exists solely to make `use` notation work. See `ERead` for documentation.
 pub trait BERead: Sized {
     fn read<D: Deserialize<BigEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
@@ -65,13 +58,11 @@ pub trait BERead: Sized {
     }
 }
 
-/**
-    Use this to `read` in **little** endian.
-
-    Wrapper for `ERead<LittleEndian>`.
-
-    This exists solely to make `use` notation work. See `ERead` for documentation.
-*/
+/// Use this to `read` in **little** endian.
+///
+/// Wrapper for `ERead<LittleEndian>`.
+///
+/// This exists solely to make `use` notation work. See `ERead` for documentation.
 pub trait LERead: Sized {
     fn read<D: Deserialize<LittleEndian, Self>>(&mut self) -> Res<D> {
         D::deserialize(self)
