@@ -3,7 +3,7 @@ mod serialize;
 
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
-use syn::{Attribute, DeriveInput, Field, Lit, LitInt, Meta, NestedMeta};
+use syn::{Attribute, DeriveInput, Expr, Field, Lit, LitInt, Meta, Token, punctuated::Punctuated};
 
 #[proc_macro_derive(
     Deserialize,
@@ -23,25 +23,20 @@ pub fn derive_serialize(input: TokenStream) -> TokenStream {
 
 fn get_enum_type(input: &DeriveInput) -> Ident {
     for attr in &input.attrs {
-        if !attr.path.is_ident("repr") {
+        if !attr.path().is_ident("repr") {
             continue;
         }
-        let meta = match attr.parse_meta() {
-            Err(_) => panic!("encountered unparseable repr attribute"),
-            Ok(x) => x,
-        };
-        let list = match meta {
+        let list = match &attr.meta {
             Meta::List(x) => x,
             _ => continue,
         };
-        if list.nested.is_empty() {
+        if list.tokens.is_empty() {
             panic!("encountered repr attribute with no arguments");
         }
-        for nested_meta in list.nested {
-            let meta = match nested_meta {
-                NestedMeta::Meta(x) => x,
-                NestedMeta::Lit(_) => continue,
-            };
+        let nested = attr
+            .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+            .unwrap();
+        for meta in nested {
             let path = match meta {
                 Meta::Path(x) => x,
                 _ => continue,
@@ -57,20 +52,19 @@ fn get_enum_type(input: &DeriveInput) -> Ident {
 
 fn get_padding(attrs: &Vec<Attribute>, attr_name: &str) -> Option<LitInt> {
     for attr in attrs {
-        if !attr.path.is_ident(attr_name) {
+        if !attr.path().is_ident(attr_name) {
             continue;
         }
-        let meta = match attr.parse_meta() {
-            Err(_) => panic!("encountered unparseable {} attribute", attr_name),
-            Ok(x) => x,
-        };
-        let lit = match meta {
-            Meta::NameValue(x) => x.lit,
-            _ => panic!("{} needs to be name=value", attr_name),
+        let lit = match &attr.meta {
+            Meta::NameValue(x) => match &x.value {
+                Expr::Lit(expr_lit) => &expr_lit.lit,
+                _ => panic!("{attr_name} value must be a literal"),
+            },
+            _ => panic!("{attr_name} needs to be name=value"),
         };
         let int_lit = match lit {
-            Lit::Int(x) => x,
-            _ => panic!("{} needs to be an integer", attr_name),
+            Lit::Int(x) => x.clone(),
+            _ => panic!("{attr_name} needs to be an integer"),
         };
         return Some(int_lit);
     }
